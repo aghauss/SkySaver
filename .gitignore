@@ -1,3 +1,4 @@
 __pycache__/
 data/
 archived_scripts/
+.DS_Store
