@@ -2,19 +2,22 @@ import asyncio
 import os
 from playwright.async_api import async_playwright
 import json
+import argparse
 
 
-with open('data/input/custom_headers.json','r') as f:
-   custom_headers = json.load(f)
+def load_json_file(file_path):
+    """Load JSON data from a file."""
+    with open(file_path, 'r') as f:
+        return json.load(f)
 
 
-with open('data/input/queries/query_300.json', 'r') as f:
-    queries_dataset = json.load(f)
-
-
-with open('data/input/proxy_config.json','r') as f:
-    proxy_configs = json.load(f)
-
+def setup_arg_parser():
+    """Setup CLI argument parser."""
+    parser = argparse.ArgumentParser(description='Run queries with optional proxy and headers configuration.')
+    parser.add_argument('--query_file', required=True, help='Path to the query JSON file')
+    parser.add_argument('--proxy_file', default='data/input/proxy_config.json', help='Path to the proxy configuration JSON file (optional)')
+    parser.add_argument('--headers_file', default='data/input/custom_headers.json', help='Path to the custom headers JSON file (optional)')
+    return parser.parse_args()
 
 
 
@@ -73,9 +76,11 @@ async def run_query_with_multiple_proxies(departure, destination, departure_date
 
 
 
-async def run_queries_sequentially_with_multiple_proxies(timeout=80):  # Adjusted timeout as needed
+async def run_queries_sequentially_with_multiple_proxies(queries_dataset, proxy_configs, custom_headers,timeout=80):  # Adjusted timeout as needed
     for entry in queries_dataset:
         await run_query_with_multiple_proxies(entry['departure'], entry['destination'], entry['departure_date'], entry['return_date'], proxy_configs, timeout)
+
+
 
 async def is_browser_alive(browser):
     try:
@@ -195,4 +200,10 @@ async def main(departure, destination, departure_date, return_date, proxy_config
         await browser.close()
 
 
-asyncio.run(run_queries_sequentially_with_multiple_proxies(timeout=80))  # Set your desired timeout in seconds
+if __name__ == "__main__":
+    args = setup_arg_parser()
+    queries_dataset = load_json_file(args.query_file)
+    proxy_configs = load_json_file(args.proxy_file)
+    custom_headers = load_json_file(args.headers_file)
+
+    asyncio.run(run_queries_sequentially_with_multiple_proxies(queries_dataset, proxy_configs, custom_headers, timeout=80))
