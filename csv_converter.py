@@ -25,52 +25,41 @@ def clean_key_0(data):
 
 # Function to clean Key 1
 def clean_key_1(data):
-    # Initialize variables for departure and arrival dates
-    departure_date = []
-    arrival_date = []
+    # Function to find indices of four-digit integers, representing years
+    def find_year_indices(data):
+        year_indices = []
+        for i, item in enumerate(data):
+            try:
+                # Check if the item is a four-digit year
+                if len(item) == 4 and item.isdigit():
+                    year = int(item)
+                    if 2024 <= year <= 2025:  # Assuming years of interest are 2024 or 2025
+                        year_indices.append(i)
+            except ValueError:
+                # Item is not an integer or does not meet the year condition
+                continue
+        return year_indices
 
-    # Step 1: Search for the first four sequential numerical entries
-    for i in range(len(data)):
-        try:
-            # Attempt to convert four consecutive items to integers
-            potential_departure_date = [int(data[i]), int(data[i+1]), int(data[i+2]), int(data[i+3])]
-            # If successful, store these four elements as "departure_date"
-            departure_date = potential_departure_date
-            # Break out of the loop once the departure date is found
-            break
-        except (ValueError, IndexError):
-            # Continue searching if conversion fails or an index error occurs
-            continue
+    year_indices = find_year_indices(data)
+    
+    # Ensure there are at least two four-digit years to form departure and arrival dates
+    if len(year_indices) < 2:
+        return [], []  # Not enough data to form dates
 
-    # Step 2 & 3: Process the logic for determining the arrival date
-    next_index = i + 4  # The next index after the ones saved for departure_date
-    if next_index < len(data):  # Ensure index is within bounds
-        try:
-            next_entry = int(data[next_index])
-            if next_entry != departure_date[0]:
-                # If next entry is not the same as the first entry of departure_date
-                departure_date.append(next_entry)  # Add this to departure_date
-                # Take the next 5 entries and add to arrival_date, ensuring not to exceed list bounds
-                for j in range(next_index + 1, min(next_index + 6, len(data))):
-                    try:
-                        arrival_date.append(int(data[j]))
-                    except ValueError:
-                        break  # Break if a non-integer is encountered
-            else:
-                # If the next entry is the same as the first entry of departure_date
-                # Take this entry and the next 3 and add them to arrival_date
-                for j in range(next_index, min(next_index + 4, len(data))):
-                    try:
-                        arrival_date.append(int(data[j]))
-                    except ValueError:
-                        break  # Break if a non-integer is encountered
-        except ValueError:
-            # If conversion of the next_index entry to integer fails, skip adding to departure/arrival date
-            pass
+    # Calculate the difference in indices to determine the length of the date lists
+    length = year_indices[1] - year_indices[0]
+
+    # Extract departure_date and arrival_date
+    departure_date = data[year_indices[0]:year_indices[0]+length]
+    arrival_date = data[year_indices[1]:year_indices[1]+length]
+
+    # Assuming second item is always the airline name and the last item is always the ticket price
+    selling_airline = data[1].replace('"', '').strip()
+    ticket_price = data[-1]
 
     return {
-        "selling_airline": data[1].replace('"', '').strip(),  # Assuming second item is always the airline name
-        "ticket_price": data[-1],  # Assuming last item is always the ticket price
+        "selling_airline": selling_airline,
+        "ticket_price": ticket_price,
         "departure_date": departure_date,
         "arrival_date": arrival_date
     }
@@ -245,8 +234,8 @@ def add_key_four_if_missing(parsed_dict):
     return parsed_dict
 
 
-json_directory_path = 'responses_max'
-html_directory_path = 'html_pages_max'
+json_directory_path = 'data/output/raw_output/json_collections/responses'
+html_directory_path = 'data/output/raw_output/html_collections/html_pages'
 
 json_files = glob.glob(os.path.join(json_directory_path, '*.json'))
 
@@ -351,7 +340,7 @@ if not os.path.exists(output_directory):
 
 
 # Save the combined DataFrame to a CSV file in the output directory
-output_file_path = os.path.join(output_directory, "Query_results_max.csv")
+output_file_path = os.path.join(output_directory, "Query4_results_datefix.csv")
 df_filtered.to_csv(output_file_path, index=False)
 
 
