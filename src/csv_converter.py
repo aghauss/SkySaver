@@ -4,18 +4,16 @@ import os
 import glob
 
 
+def clean_string(s):
+    return s.replace('"', '').replace(',', '').strip()
+
 def clean_key_0(data):
-    # Attempt to extract values using the initial indices
-    airline_code = data[1].replace('"', '').replace(',', '').strip()
-    departure_airport_code = data[2].replace('"', '').replace(',', '').strip()
-    destination_airport_code = data[3].replace('"', '').replace(',', '').strip()
+    # Use clean_string in the condition to determine indices
+    indices = [1, 2, 3] if len(clean_string(data[2])) == 3 else [18, 19, 20]
     
-    # Check if the length of departure_airport_code is not equal to three
-    if len(departure_airport_code) != 3:
-        # If not, use alternative indices for the extraction
-        airline_code = data[18].replace('"', '').replace(',', '').strip()
-        departure_airport_code = data[19].replace('"', '').replace(',', '').strip()
-        destination_airport_code = data[20].replace('"', '').replace(',', '').strip()
+    airline_code = clean_string(data[indices[0]])
+    departure_airport_code = clean_string(data[indices[1]])
+    destination_airport_code = clean_string(data[indices[2]])
     
     return {
         "airline_code": airline_code,
@@ -23,39 +21,22 @@ def clean_key_0(data):
         "destination_airport_code": destination_airport_code,
     }
 
-# Function to clean Key 1
-def clean_key_1(data):
-    # Function to find indices of four-digit integers, representing years
-    def find_year_indices(data):
-        year_indices = []
-        for i, item in enumerate(data):
-            try:
-                # Check if the item is a four-digit year
-                if len(item) == 4 and item.isdigit():
-                    year = int(item)
-                    if 2024 <= year <= 2025:  # Assuming years of interest are 2024 or 2025
-                        year_indices.append(i)
-            except ValueError:
-                # Item is not an integer or does not meet the year condition
-                continue
-        return year_indices
 
-    year_indices = find_year_indices(data)
+def clean_key_1(data, year_min=2024, year_max=2025):
+    # Directly find year indices with a more flexible range
+    year_indices = [i for i, item in enumerate(data) if item.isdigit() and year_min <= int(item) <= year_max]
     
-    # Ensure there are at least two four-digit years to form departure and arrival dates
     if len(year_indices) < 2:
-        return [], []  # Not enough data to form dates
-
-    # Calculate the difference in indices to determine the length of the date lists
+        return {}, {}  # Not enough data to form dates
+    
+    # Assuming the structure around years is consistent for departure and arrival dates
     length = year_indices[1] - year_indices[0]
-
-    # Extract departure_date and arrival_date
     departure_date = data[year_indices[0]:year_indices[0]+length]
     arrival_date = data[year_indices[1]:year_indices[1]+length]
-
-    # Assuming second item is always the airline name and the last item is always the ticket price
-    selling_airline = data[1].replace('"', '').strip()
-    ticket_price = data[-1]
+    
+    # Use the clean_string function for consistency
+    selling_airline = clean_string(data[1])
+    ticket_price = clean_string(data[-1])
 
     return {
         "selling_airline": selling_airline,
@@ -67,9 +48,16 @@ def clean_key_1(data):
 
 
 def clean_key_2(data):
+    # Use the clean_string helper function to clean the data
+    first_part = clean_string(data[3])
+    second_part = clean_string(data[6])
+    
+    # Format and return the first flight code
+    first_flight_code = f"{first_part}-{second_part}"
     return {
-        "First_flight": data[3].replace('"', '').replace(',', '').strip() + "-" + data[6].replace('"', '').replace(',', '').strip()
+        "First_flight": first_flight_code
     }
+
 
 def preprocess_flight_data(data):
     # Initialize variables
@@ -121,7 +109,8 @@ def clean_key_3(data):
         "first_flight_code": combined_entry
     }
 
-def c2lean_key_3(data):
+
+def clean_key_3_secondtime(data):
     # Process each journey in steps of 5, ignoring any trailing elements that don't fit the pattern
     for i in range(0, len(data) - len(data) % 5, 5):
         # Extract times, dates, and combined airline information
@@ -141,12 +130,19 @@ def c2lean_key_3(data):
 
 
 
+
 def clean_key_4(data):
-    # Extracting, cleaning, and merging the first and second entries
-    last_flight_code = data[0].replace('"', '').strip() + data[1].replace('"', '').strip()
-    return {
-        "last_flight_code": last_flight_code
-    }
+    if len(data) >= 2:
+        # Use the clean_string helper function to clean the entries
+        first_part = clean_string(data[0])
+        second_part = clean_string(data[1])
+        
+        last_flight_code = first_part + second_part
+        return {"last_flight_code": last_flight_code}
+    else:
+        # Handle the case where data does not contain enough entries
+        return {"last_flight_code": "NaN"}
+
 
 
 
@@ -162,7 +158,7 @@ def process_flight_data(raw_data):
     flights_info = clean_key_2(raw_data[2])
     clean_key3_data = preprocess_flight_data(raw_data[3])
     journey_info = clean_key_3(clean_key3_data)
-    journey_info2 = c2lean_key_3(raw_data[3])
+    journey_info2 = clean_key_3_secondtime(raw_data[3])
     last_flight = clean_key_4(raw_data[4])
     
     cleaned_data = {**general_info, **selling_airline_info, **flights_info, **journey_info,**last_flight,**journey_info2}
@@ -233,115 +229,87 @@ def add_key_four_if_missing(parsed_dict):
 
     return parsed_dict
 
+# Function to process a single JSON file
+def process_json_file(json_file_path):
+    # Assuming parse_nested_string_v2 and other necessary parsing functions are defined elsewhere
+    with open(json_file_path, 'r') as json_file:
+        short_json_string = json_file.read()
+        unescaped_json = bytes(short_json_string, "utf-8").decode("unicode_escape")
+        splitted_json = unescaped_json.split("[\\\"")[1:-1]
 
-json_directory_path = 'data/output/raw_output/json_collections/responses'
-html_directory_path = 'data/output/raw_output/html_collections/html_pages'
+    Journeys = []
+    for journey in splitted_json:
+        parsed_journey = parse_nested_string_v2(journey)
+        # Assuming add_key_four_if_missing is defined and corrects the parsed journey as needed
+        final_journey = add_key_four_if_missing(parsed_journey)
+        Journeys.append(final_journey)
 
-json_files = glob.glob(os.path.join(json_directory_path, '*.json'))
-
-# Clean Dictionaries
+    df_json = pd.DataFrame()
+    for journey in Journeys:
+        temp_df = process_flight_data(journey)  # Assuming this function is defined and processes each journey
+        df_json = pd.concat([df_json, temp_df], ignore_index=True)
     
-column_list = ['airline_code','departure_airport_code','destination_airport_code',"departure_date","arrival_date",
-                'ticket_price','First_flight','first_flight_code','last_flight_code','selling_airline', "departure_time","arrival_time",]
+    return df_json
 
-
-meta_column_names = ["Detected_Language", "Assigned_Country", "Assigned_Currency"]
-
-df_combined = pd.DataFrame(columns=column_list + meta_column_names)
-
-
-for json_file_path in json_files:
-    df_json = pd.DataFrame(columns = column_list)
-    # Derive the base name without the extension to match the HTML file
-    base_name = os.path.splitext(os.path.basename(json_file_path))[0]
+# Function to process a corresponding HTML file
+def process_html_file(html_file_path, df_json_length):
+    with open(html_file_path, 'r') as html_file:
+        soup = BeautifulSoup(html_file, 'html.parser')
+    elements = soup.find_all('span', class_='twocKe')
     
-    # Construct the HTML file path based on the JSON file base name but in the HTML directory
-    html_file_path = os.path.join(html_directory_path, base_name + '.html')
+    meta_data = {}
+    if len(elements) >= 3:  # Assuming there are 3 metadata fields to extract
+        meta_data = {
+            "Detected_Language": elements[0].text,
+            "Detected_Country": elements[1].text,
+            "Detected_Currency": elements[2].text
+        }
+    else:
+        print(f"Metadata missing or incomplete in {html_file_path}.")
+    
+    # Repeat the metadata for each row in df_json
+    df_meta = pd.DataFrame([meta_data] * df_json_length)
+    return df_meta
 
+# Function to merge JSON and HTML extracted data
+def merge_data_frames(df_json, df_html):
+    result_df = pd.concat([df_json.reset_index(drop=True), df_html.reset_index(drop=True)], axis=1)
+    return result_df
 
-    # Check if the corresponding HTML file exists
-    if os.path.exists(html_file_path):
-        # Load and process the JSON file
-        with open(json_file_path, 'r') as json_file:
-            short_json_string = json_file.read()
+# Main processing loop
+def main():
+    json_directory_path = '../data/output/json_collections/responses'
+    html_directory_path = '../data/output/html_collections/html_pages'
+    output_directory = '../data/query_results'
+    json_files = glob.glob(os.path.join(json_directory_path, '*.json'))
 
-            #Unescaping
-            unsecaped_json = bytes(short_json_string, "utf-8").decode("unicode_escape")
+    df_combined = pd.DataFrame()
 
-            #Splitting
-            splitted_json_long = unsecaped_json.split("[\\\"")
+    for json_file_path in json_files:
+        df_json = process_json_file(json_file_path)
+        if df_json.empty:
+            print(f"No data to concatenate for {json_file_path}")
+            continue  # Skip further processing for this file
 
-            # Deleting first and last entry (for now might be necessary to do more)
-            splitted_json = splitted_json_long[1:-1]
+        base_name = os.path.splitext(os.path.basename(json_file_path))[0]
+        html_file_path = os.path.join(html_directory_path, f'{base_name}.html')
 
-            # Create Dictionary per Split
-
-            Journeys = []  # This will hold all the parsed journey dictionaries
-            journeys_list = splitted_json  # Your list of journeys to parse
-
-            for journey in journeys_list:
-                parsed_journey = parse_nested_string_v2(journey)
-                Journeys.append(parsed_journey) 
-
-            for journey in Journeys:
-                final_dict = add_key_four_if_missing(journey)    
-
-            for journey in Journeys:
-                temp_df = process_flight_data(journey)
-                df_json = pd.concat([df_json,temp_df])
-
-            
-
-        for journey in Journeys:
-                temp_df = process_flight_data(journey)
-                df_json = pd.concat([df_json,temp_df])
-
-        # Add the conditional check here
-        if len(df_json) > 0:
-            # Load and process the HTML file
-            with open(html_file_path, 'r') as html_file:
-                soup = BeautifulSoup(html_file, 'html.parser')
-                # Find elements by class name
-                elements = soup.find_all('span', class_='twocKe')
-
-                if len(elements) == len(meta_column_names):
-                    # Extract the text from each element and create a dictionary with it
-                    new_row = {meta_column_names[i]: elements[i].text for i in range(len(meta_column_names))}
-                    # Convert the dictionary to a DataFrame
-                    new_row_df = pd.DataFrame([new_row])
-                    # Repeat the metadata row for each journey in 'df_json'
-                    df2_repeated = pd.concat([new_row_df]*len(df_json), ignore_index=True).reset_index(drop=True)
-                else:
-                    print("The number of elements does not match the number of columns.")
-                    # Handle the error appropriately, perhaps by skipping this file
-                    continue
-
-                # Combine the data from JSON and HTML processing
-                # Ensure both DataFrames have the same index before concatenating
-                df_json.reset_index(drop=True, inplace=True)
-                result_df = pd.concat([df_json, df2_repeated], axis=1)
-
-            # Append the combined data to the 'df_combined' DataFrame
+        if os.path.exists(html_file_path):
+            df_html = process_html_file(html_file_path, len(df_json))
+            result_df = merge_data_frames(df_json, df_html)
             df_combined = pd.concat([df_combined, result_df], ignore_index=True)
         else:
-            print(f"No data to concatenate for {json_file_path}")
+            print(f"Corresponding HTML file not found for {json_file_path}")
+    
+    # Additional data processing steps
+    df_combined['ticket_price'] = pd.to_numeric(df_combined['ticket_price'], errors='coerce')
+    df_filtered = df_combined[df_combined['ticket_price'] > 2]
 
+    # Save the combined DataFrame to a CSV file
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+    output_file_path = os.path.join(output_directory, "Query4_results_test.csv")
+    df_combined.to_csv(output_file_path, index=False)
 
-# Convert 'ticket_price' to numeric, coercing errors to NaN
-df_combined['ticket_price'] = pd.to_numeric(df_combined['ticket_price'], errors='coerce')
-
-# Now filter the DataFrame
-df_filtered = df_combined[df_combined['ticket_price'] > 2]
-
-# Define the output directory
-output_directory = 'output/'
-if not os.path.exists(output_directory):
-    os.makedirs(output_directory)
-
-
-# Save the combined DataFrame to a CSV file in the output directory
-output_file_path = os.path.join(output_directory, "Query4_results_datefix.csv")
-df_filtered.to_csv(output_file_path, index=False)
-
-
-
+if __name__ == "__main__":
+    main()
