@@ -200,6 +200,21 @@ df_reduced["price_diff_loc_to_glob_Journey_min"] = df_reduced["min_journey_same_
 df_reduced["rel_price_diff_loc_to_glob_Journey_min"] = (df_reduced["price_diff_loc_to_glob_Journey_min"] / df_reduced["min_price_JourneyID"]) * 100
 
 
+# Step 1: Filter to get rows where Price_in_USD equals the min for each Journey_ID
+cheapest_mask_journey = df_reduced['Price_in_USD'] == df_reduced['min_price_JourneyID']
+cheapest_journeys = df_reduced[cheapest_mask_journey]
+
+# Group by Flight_ID and select the first Detected_Country name alphabetically
+cheapest_locations_journey = cheapest_journeys.groupby('Journey_ID')['Detected_Country'].min().reset_index()
+
+# Rename the column for clarity
+cheapest_locations_journey.rename(columns={'Detected_Country': 'Cheapest_Location_Journey'}, inplace=True)
+
+# Step 2: Merge this information back with the original DataFrame
+df_reduced = df_reduced.merge(cheapest_locations_journey, on='Journey_ID', how='left')
+
+
+
 #Creating Variables that analyse price differences between identical Flights within the same query-country**
 cheapest_mask = df_reduced['Price_in_USD'] == df_reduced['min_price_FlightID']
 cheapest_flights = df_reduced[cheapest_mask]
@@ -211,6 +226,20 @@ cheapest_locations.rename(columns={'Detected_Country': 'Cheapest_Location_Flight
 df_reduced = df_reduced.merge(cheapest_locations, on='Flight_ID', how='left')
 
 
-file_path = f'../data/processed_data/{args.filename}_processed.csv'
+# Calculate the average of rel_diff_to_min_price_FlightID for each Journey_ID and Detected_Country
+average_savings_route = df_reduced.groupby(['Journey_route', 'Detected_Country'])['rel_diff_to_min_price_FlightID'].mean().reset_index(name='average_savings_for_Journey_route_in_Detected_Country')
+# Merge the average_savings DataFrame back into df_reduced
+df_reduced = df_reduced.merge(average_savings_route, on=['Journey_route', 'Detected_Country'], how='left')
+
+cheapest_location_counts = df_reduced.groupby(['Journey_route', 'Detected_Country', 'Cheapest_Location_Flight']).size().reset_index(name='count_cheapest_location')
+# Ensure a randomized selection in case of ties by shuffling
+cheapest_location_counts = cheapest_location_counts.sample(frac=1).reset_index(drop=True)
+cheapest_location_counts_sorted = cheapest_location_counts.sort_values(['Journey_route', 'Detected_Country', 'count_cheapest_location'], ascending=[True, True, False])
+top_cheapest_location = cheapest_location_counts_sorted.groupby(['Journey_route', 'Detected_Country']).first().reset_index()
+top_cheapest_location["Mode_Cheapest_Location_Journey"] = top_cheapest_location["Cheapest_Location_Flight"]
+df_reduced = df_reduced.merge(top_cheapest_location[['Journey_route', 'Detected_Country', 'Mode_Cheapest_Location_Journey']], on=['Journey_route', 'Detected_Country'], how='left')
+
+
+file_path = f'../data/4.processed_data/{args.filename}_processed.csv'
 
 df_reduced.to_csv(file_path, index=False)
