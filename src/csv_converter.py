@@ -278,8 +278,9 @@ def merge_data_frames(df_json, df_html):
 
 # Main processing loop
 def main():
-    json_directory_path = '../data/output/json_collections/responses'
-    html_directory_path = '../data/output/html_collections/html_pages'
+    json_directory_path = '../data/2.crawler_output/json_collections/responses'
+    html_directory_path = '../data/2.crawler_output/html_collections/html_pages'
+    
     output_directory = '../data/query_results'
     json_files = glob.glob(os.path.join(json_directory_path, '*.json'))
 

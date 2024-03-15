@@ -142,7 +142,7 @@ df_reduced['Price_in_USD'] = df_reduced.apply(lambda row: convert_to_usd(row, 't
 #Creating commutime time
 
 df_reduced['commute_time'] = (df_reduced['arrival_date'] - df_reduced['departure_date']).dt.total_seconds() / 60
-df_reduced['query_date'] = pd.Timestamp('2024-02-15')
+df_reduced['query_date'] = pd.Timestamp('2024-03-15')
 df_reduced['days_until_departure'] = (df_reduced['departure_date'] - df_reduced['query_date']).dt.days
 
 #Eliminating queries with little country variance

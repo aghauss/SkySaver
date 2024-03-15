@@ -15,8 +15,8 @@ def setup_arg_parser():
     """Setup CLI argument parser."""
     parser = argparse.ArgumentParser(description='Run queries with optional proxy and headers configuration.')
     parser.add_argument('--query_file', required=True, help='Path to the query JSON file')
-    parser.add_argument('--proxy_file', default='data/input/proxy_config.json', help='Path to the proxy configuration JSON file (optional)')
-    parser.add_argument('--headers_file', default='data/input/custom_headers.json', help='Path to the custom headers JSON file (optional)')
+    parser.add_argument('--proxy_file', default='../data/1.crawler_input/proxy_config.json', help='Path to the proxy configuration JSON file (optional)')
+    parser.add_argument('--headers_file', default='../data/1.crawler_input/custom_headers.json', help='Path to the custom headers JSON file (optional)')
     return parser.parse_args()
 
 
@@ -167,33 +167,33 @@ async def main(departure, destination, departure_date, return_date, proxy_config
         await page.keyboard.up('Meta')
         await page.keyboard.press('Backspace')
         await page.keyboard.type(departure)
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
+        await page.keyboard.press('Tab')
+        await asyncio.sleep(3)
         await page.keyboard.press('Tab')
         await asyncio.sleep(2)
-        await page.keyboard.press('Tab')
-        await asyncio.sleep(1)
         # Simulate typing 'New York' into the destination field and pressing Enter
         await page.keyboard.type(destination)
+        await asyncio.sleep(3)
+        await page.keyboard.press('Tab')
+        await page.keyboard.press('Tab')
         await asyncio.sleep(2)
-        await page.keyboard.press('Tab')
-        await page.keyboard.press('Tab')
-        await asyncio.sleep(1)
         # Simulate typing the departure date and pressing Tab
         await page.keyboard.type(departure_date)
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
         await page.keyboard.press('Tab')
 
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
         # Simulate typing the return date and pressing Enter
         await page.keyboard.type(return_date)
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
         await page.keyboard.press('Enter')
         await page.keyboard.press('Enter')
 
         # Wait for a moment to see the result
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
         await page.keyboard.press('Enter')
-        await asyncio.sleep(10)
+        await asyncio.sleep(12)
 
         # Correctly closing context and browser at the end of the function.
         await context.close()
