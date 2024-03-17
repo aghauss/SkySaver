@@ -87,7 +87,7 @@ def clean_fifth_element(lst):
             cleaned_lst.append(item[:4] + [0])
     return cleaned_lst
 
-conversion_rates_old = {
+conversion_rates = {
     'CHF': 1.14,  # 1 CHF = 1.134556 USD as of Feb 20, 2024, according to X-Rates
     'TRY': 0.032,   # 1 TRY = 0.03230 USD as of Feb 21, 2024, according to Wise
     'PLN': 0.25,  # 1 PLN = 0.250338 USD as of Feb 21, 2024, according to Xe.com
@@ -103,7 +103,7 @@ conversion_rates_old = {
     'BDT' : 0.0091,
 }
 
-conversion_rates = {
+conversion_rates_new = {
     "CHF": 1.1345485196501948,
     "TRY": 0.032438522553027406,
     "PLN": 0.24811059907834102,
