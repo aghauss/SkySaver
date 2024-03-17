@@ -22,6 +22,8 @@ hyperopt = "^0.2.7"
 pkg = "^0.2"
 bayesian-optimization = "^1.4.3"
 pycaret = "^2.2"
+optuna = "^3.5.0"
+forex-python = "^1.8"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.2"
