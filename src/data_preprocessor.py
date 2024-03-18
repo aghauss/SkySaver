@@ -87,7 +87,7 @@ def clean_fifth_element(lst):
             cleaned_lst.append(item[:4] + [0])
     return cleaned_lst
 
-conversion_rates = {
+conversion_rates_old = {
     'CHF': 1.14,  # 1 CHF = 1.134556 USD as of Feb 20, 2024, according to X-Rates
     'TRY': 0.032,   # 1 TRY = 0.03230 USD as of Feb 21, 2024, according to Wise
     'PLN': 0.25,  # 1 PLN = 0.250338 USD as of Feb 21, 2024, according to Xe.com
@@ -103,7 +103,7 @@ conversion_rates = {
     'BDT' : 0.0091,
 }
 
-conversion_rates_new = {
+conversion_rates_old2 = {
     "CHF": 1.1345485196501948,
     "TRY": 0.032438522553027406,
     "PLN": 0.24811059907834102,
@@ -118,6 +118,25 @@ conversion_rates_new = {
     "BDT": 0.0091,
     "USD": 1.0
 }
+
+conversion_rates = {
+    "CHF": 1.131966,
+    "TRY": 0.030954,
+    "PLN": 0.252912,
+    "GBP": 1.273564,
+    "AUD": 0.6519343706484229,
+    "BRL": 0.20107934492353083,
+    "IDR": 0.000064,
+    "EUR": 1.089966,
+    "ALL": 0.01053,
+    "JPY": 0.006704,
+    "BDT": 0.0091,
+    "JOD": 1.41,
+    "USD": 1.0
+}
+
+
+
 
 # Initialize the parser
 parser = argparse.ArgumentParser(description='Load a CSV file that will be preproccessed. The output will be a csv with more features.')
