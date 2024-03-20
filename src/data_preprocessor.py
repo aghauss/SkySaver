@@ -278,3 +278,4 @@ df_reduced = df_reduced.merge(top_cheapest_location[['Journey_route', 'Detected_
 file_path = f'../data/4.processed_data/{args.filename}_processed.csv'
 
 df_reduced.to_csv(file_path, index=False)
+
