@@ -26,7 +26,7 @@ def compare_csv_files(file1_path, file2_path):
             print(f"Total discrepancies found: {discrepancy_count}")
 
 # Example usage
-file1 = 'data/4.processed_data/Query4_results_test_processed.csv'
-file2 = 'data/4.processed_data/Query1803_results_processed.csv'
+file1 = '../data/4.processed_data/Processed_Query_1502.csv'
+file2 = '../data/4.processed_data/Query_1502_processed.csv'
 compare_csv_files(file1, file2)
 

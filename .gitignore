@@ -3,3 +3,4 @@ data/
 archived_scripts/
 .DS_Store
 notes.txt
+tests/
