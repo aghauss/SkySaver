@@ -87,7 +87,7 @@ def clean_fifth_element(lst):
             cleaned_lst.append(item[:4] + [0])
     return cleaned_lst
 
-conversion_rates_old = {
+conversion_rates = {
     'CHF': 1.14,  # 1 CHF = 1.134556 USD as of Feb 20, 2024, according to X-Rates
     'TRY': 0.032,   # 1 TRY = 0.03230 USD as of Feb 21, 2024, according to Wise
     'PLN': 0.25,  # 1 PLN = 0.250338 USD as of Feb 21, 2024, according to Xe.com
@@ -103,37 +103,6 @@ conversion_rates_old = {
     'BDT' : 0.0091,
 }
 
-conversion_rates_old2 = {
-    "CHF": 1.1345485196501948,
-    "TRY": 0.032438522553027406,
-    "PLN": 0.24811059907834102,
-    "GBP": 1.2578704514923194,
-    "AUD": 0.6519343706484229,
-    "BRL": 0.20107934492353083,
-    "IDR": 0.000064,
-    'JOD': 1.41,
-    "EUR": 1.0768,
-    "ALL": 0.011,
-    "JPY": 0.006651840869780084,
-    "BDT": 0.0091,
-    "USD": 1.0
-}
-
-conversion_rates = {
-    "CHF": 1.131966,
-    "TRY": 0.030954,
-    "PLN": 0.252912,
-    "GBP": 1.273564,
-    "AUD": 0.6519343706484229,
-    "BRL": 0.20107934492353083,
-    "IDR": 0.000064,
-    "EUR": 1.089966,
-    "ALL": 0.01053,
-    "JPY": 0.006704,
-    "BDT": 0.0091,
-    "JOD": 1.41,
-    "USD": 1.0
-}
 
 
 
@@ -220,6 +189,7 @@ price_stats_journey['max_abs_diff_JourneyID'] = price_stats_journey['max'] - pri
 price_stats_journey.columns = ['max_price_JourneyID', 'min_price_JourneyID', 'max_abs_diff_JourneyID']
 price_stats_journey['max_rel_diff_Journey'] = (price_stats_journey['max_abs_diff_JourneyID'] / price_stats_journey['min_price_JourneyID']) * 100
 df_reduced = pd.merge(df_reduced, price_stats_journey, on='Journey_ID', how='left')
+
 df_reduced["abs_diff_to_min_price_JourneyID"] = df_reduced["Price_in_USD"] - df_reduced["min_price_JourneyID"]
 df_reduced["rel_diff_to_min_price_JourneyID"] = ((df_reduced["Price_in_USD"] /df_reduced["min_price_JourneyID"] ) -1) * 100
 df_reduced['rel_price_score_JourneyID'] = df_reduced['rel_diff_to_min_price_JourneyID'] / df_reduced['max_rel_diff_Journey']
@@ -230,7 +200,9 @@ price_stats_journey_same_country['max_abs_diff_perIDGroup_Journey_same_country']
 price_stats_journey_same_country.columns = ['max_journey_same_country', 'min_journey_same_country', 'max_abs_diff_perIDGroup_Journey_same_country']
 price_stats_journey_same_country['max_rel_diff_perIDGroup_Journey_same_country'] = (price_stats_journey_same_country['max_abs_diff_perIDGroup_Journey_same_country'] / price_stats_journey_same_country['min_journey_same_country']) * 100
 
-df_reduced = pd.merge(df_reduced, price_stats_journey_same_country, on=['Journey_ID','Detected_Country'], how='left')
+df_reduced = pd.merge(df_reduced, price_stats_journey_same_country, on=['Journey_ID','Detected_Country'], how='left'
+                      
+                      )
 df_reduced["price_diff_loc_to_glob_Journey_min"] = df_reduced["min_journey_same_country"] - df_reduced["min_price_JourneyID"]
 df_reduced["rel_price_diff_loc_to_glob_Journey_min"] = (df_reduced["price_diff_loc_to_glob_Journey_min"] / df_reduced["min_price_JourneyID"]) * 100
 
