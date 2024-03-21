@@ -1,54 +1,36 @@
-import pandas as pd
-import numpy as np
-import ast
 import argparse
+import json
+import os
+import ast
+import pandas as pd
 from datetime import datetime
 
+def get_absolute_path(relative_path):
+    """
+    Converts a relative file path to an absolute path, based on the script's location.
+    """
+    # Determine the directory of this script:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Build an absolute path by combining the script's directory with the relative path:
+    return os.path.join(script_dir, relative_path)
 
-def convert_to_usd(row, price_col_name, currency_col_name):
-    price = row[price_col_name]
-    currency = row[currency_col_name]
-    price = row['ticket_price']
-    conversion_rate = conversion_rates.get(currency)
-
-    # Check if conversion_rate is None
-    if conversion_rate is None:
-        # Handle the error (e.g., return 0, raise an exception, or use a default conversion rate)
-        raise ValueError(f"Conversion rate for currency '{currency}' is not available.")
-        # Alternatively, you can return 0 or some default value instead of raising an error
-        # return 0
-    
-    return price * conversion_rate
-
-
-def convert_us_formatted_list_to_datetime(date_list):
-    # Convert 'null' or empty strings to 0 and other elements to integers
-    date_list = [0 if element in ['null', ''] else int(element) for element in date_list]
-    
-    try:
-        # Assuming date_list is in the format [MM, DD, YYYY, hour (optional), minute (optional)]
-        # and you want to handle lists with optional time components
-        if len(date_list) == 3:
-            # Only date components are present
-            return datetime(month=date_list[0], day=date_list[1], year=date_list[2])
-        elif len(date_list) == 5:
-            # Both date and time components are present
-            return datetime(month=date_list[0], day=date_list[1], year=date_list[2], hour=date_list[3], minute=date_list[4])
-        elif len(date_list) == 4:
-            # Date and either hour or minute is present, assuming hour is given and setting default for minute
-            return datetime(month=date_list[0], day=date_list[1], year=date_list[2], hour=date_list[3], minute=0)
+def clean_fifth_element(lst):
+    cleaned_lst = []
+    for item in lst:
+        if len(item) >= 5:
+            fifth_element = item[4]
+            if isinstance(fifth_element, int):
+                cleaned_lst.append(item[:4] + [fifth_element] + item[5:])
+            else:
+                try:
+                    cleaned_lst.append(item[:4] + [int(fifth_element)] + item[5:])
+                except ValueError:
+                    # If the fifth element cannot be converted to an integer, replace it with 0
+                    cleaned_lst.append(item[:4] + [0] + item[5:])
         else:
-            # Return None for lists of unexpected length to indicate an issue
-            return None
-    except TypeError as e:
-        # Handle cases where the list contents cannot be directly unpacked into datetime
-        print(f"Error converting list to datetime: {e}")
-        return None
-    except ValueError as e:
-        # Handle cases where the conversion fails due to incorrect values (e.g., invalid dates like February 30th)
-        print(f"Invalid date value in the list: {e}")
-        return None
-
+            # If the list is too short, consider the fifth element as 0
+            cleaned_lst.append(item[:4] + [0])
+    return cleaned_lst
 
 
 def convert_list_to_datetime(date_list):
@@ -69,185 +51,277 @@ def convert_list_to_datetime(date_list):
         # Handle cases where the list contents cannot be directly unpacked into datetime
         return None
 
-def clean_fifth_element(lst):
-    cleaned_lst = []
-    for item in lst:
-        if len(item) >= 5:
-            fifth_element = item[4]
-            if isinstance(fifth_element, int):
-                cleaned_lst.append(item[:4] + [fifth_element] + item[5:])
-            else:
-                try:
-                    cleaned_lst.append(item[:4] + [int(fifth_element)] + item[5:])
-                except ValueError:
-                    # If the fifth element cannot be converted to an integer, replace it with 0
-                    cleaned_lst.append(item[:4] + [0] + item[5:])
-        else:
-            # If the list is too short, consider the fifth element as 0
-            cleaned_lst.append(item[:4] + [0])
-    return cleaned_lst
 
-conversion_rates = {
-    'CHF': 1.14,  # 1 CHF = 1.134556 USD as of Feb 20, 2024, according to X-Rates
-    'TRY': 0.032,   # 1 TRY = 0.03230 USD as of Feb 21, 2024, according to Wise
-    'PLN': 0.25,  # 1 PLN = 0.250338 USD as of Feb 21, 2024, according to Xe.com
-    'GBP': 1.26,      # Example rate, adjust with the actual rate when available
-    'JOD': 1.41,      
-    'AUD' : 0.66,
-    'BRL' : 0.2,
-    'IDR' : 0.000064,
-    'USD' : 1.0,
-    'EUR' : 1.08,
-    'ALL' : 0.010,
-    'JPY' : 0.0066,
-    'BDT' : 0.0091,
-}
+def load_config(filename):
+    """
+    Loads configuration for a specific filename from a JSON configuration file.
+    """
+    # Using the get_absolute_path function to find the config file:
+    config_file_path = get_absolute_path('../config/preproccessing_config.json')
+    with open(config_file_path) as config_file:
+        config = json.load(config_file)
+    return config.get("data_configurations", {}).get(filename, {})
 
 
+def load_dataset(df_path):
+    """
+    Load and return the dataset from the specified path.
+    """
+    try:
+        df = pd.read_csv(df_path)
+        return df
+    except FileNotFoundError:
+        print(f"The file {df_path} was not found.")
+        exit(1)
 
 
+def create_flight_id(df):
+    """
+    Creates a unique FlightID for each flight based on several columns and removes unnecessary columns.
+    """
+    id_columns = ['airline_code', 'departure_airport_code', 'destination_airport_code',
+                  'First_flight', 'last_flight_code', 'arrival_date', 'departure_date',
+                  'departure_time', 'selling_airline', 'arrival_time', 'first_flight_code']
+    df['Flight_ID'] = df[id_columns].astype(str).agg('-'.join, axis=1)
+    df.drop(['departure_time', 'selling_airline', 'arrival_time'], axis=1, inplace=True)
+    return df
 
-# Initialize the parser
-parser = argparse.ArgumentParser(description='Load a CSV file that will be preproccessed. The output will be a csv with more features.')
-# Add the 'filename' argument
-parser.add_argument('filename', help='The name of the file to be loaded from the folder')
-# Parse the command line arguments
-args = parser.parse_args()
+def convert_date_columns(df):
+    """
+    Processes 'arrival_date' and 'departure_date' columns in the DataFrame.
+    1. Converts string representations of lists into actual lists using ast.literal_eval.
+    2. Cleans the data within these lists using the clean_fifth_element function.
+    3. Converts the lists into datetime objects using the convert_list_to_datetime function.
+    """
+    for col in ['arrival_date', 'departure_date']:
+        # Convert string representations to lists
+        df[col] = df[col].apply(ast.literal_eval)
 
-# Construct the file path using the 'filename' argument
-file_path = f'../data/3.raw_query_results/{args.filename}.csv'
+        # Clean the lists
+        df[col] = clean_fifth_element(df[col])
 
-# Read and Clean Dataset
+        # Convert lists to datetime objects
+        df[col] = df[col].apply(convert_list_to_datetime)
+    
+    return df
 
-df = pd.read_csv(file_path)
+def load_initial_configuration(filename):
+    """
+    Loads the initial configuration for the script based on the provided filename.
+    This includes loading conversion rates and query dates from the configuration.
+    """
+    config = load_config(filename)
+    conversion_rate_file_path = config.get("conversion_rate_file")
+    query_date = config.get("query_date")
 
-for i in ['arrival_date','departure_date']:
-    df[i] = df[i].apply(ast.literal_eval)
+    # Resolve the absolute path of the conversion rate file and load it
+    conversion_rate_file_absolute_path = get_absolute_path(conversion_rate_file_path)
+    with open(conversion_rate_file_absolute_path) as f:
+        conversion_rates = json.load(f)
+    
+    return conversion_rates, query_date
 
-df['arrival_date'] = clean_fifth_element(df['arrival_date'])
-df['departure_date'] = clean_fifth_element(df['departure_date'])
-for i in ['arrival_date','departure_date']:
-    df[i] = df[i].apply(convert_list_to_datetime)
+def remove_duplicates_and_erroneous_rows(df):
+    """
+    Removes duplicates based on a composite key and drops rows with missing or erroneous data.
+    - Duplicates are identified based on a composite of 'Flight_ID', 'Detected_Country', 'Detected_Language',
+      'Detected_Country' again for emphasis, and 'ticket_price'.
+    - Erroneous rows are defined as those missing critical information or having a 'ticket_price' below a threshold.
+    """
+    # Create a composite key for identifying duplicates
+    df["Duplicate_checker"] = (df['Flight_ID'] + df['Detected_Country'] + df["Detected_Language"] +
+                               df["Detected_Country"] + df["ticket_price"].astype(str))
+    
+    # Remove duplicates based on the composite key
+    df = df.drop_duplicates(subset='Duplicate_checker', keep='first')
+    
+    # Drop the temporary duplicate checker column
+    df = df.drop(['Duplicate_checker'], axis=1)
+    
+    # Drop rows missing critical information and with 'ticket_price' below 10
+    df.dropna(subset=['Detected_Currency', 'ticket_price', 'Detected_Country'], inplace=True)
+    df = df[df['ticket_price'] >= 10]
+    
+    return df
 
-#Create identifier (FlightID) for identical flights**
-df['Flight_ID'] = df[['airline_code', 'departure_airport_code', 'destination_airport_code','First_flight','last_flight_code','arrival_date','departure_date', 'departure_time','selling_airline','arrival_time','first_flight_code']].astype(str).agg('-'.join, axis=1)
-df = df.drop(['departure_time','selling_airline','arrival_time'], axis = 1)
-#Remove duplicates**
-df["Duplicate_checker"] = df['Flight_ID'] + df['Detected_Country'] + df["Detected_Language"] + df["Detected_Country"] + str(df["ticket_price"])
-df_reduced = df.drop_duplicates(subset='Duplicate_checker', keep='first').copy()
-df_reduced = df_reduced.drop(['Duplicate_checker'], axis = 1)
-#Remove NaN and erroneous rows**
-df_reduced.dropna(subset=['Detected_Currency', 'ticket_price', 'Detected_Country'], inplace=True)
-df_reduced = df_reduced[df_reduced['ticket_price'] >= 10]
+def convert_to_usd(row, price_col_name, currency_col_name, conversion_rates):
+    price = row[price_col_name]
+    currency = row[currency_col_name]
+    conversion_rate = conversion_rates.get(currency)
 
-# Feature engineering
-df_reduced['Price_in_USD'] = df_reduced.apply(lambda row: convert_to_usd(row, 'ticket_price', 'Detected_Currency'), axis=1)
-
-#Creating commutime time
-
-df_reduced['commute_time'] = (df_reduced['arrival_date'] - df_reduced['departure_date']).dt.total_seconds() / 60
-df_reduced['query_date'] = pd.Timestamp('2024-03-15')
-df_reduced['days_until_departure'] = (df_reduced['departure_date'] - df_reduced['query_date']).dt.days
-
-#Eliminating queries with little country variance
-
-# Count the number of different countries available per Flight_ID
-country_count_per_flight = df_reduced.groupby('Flight_ID')['Detected_Country'].nunique().reset_index(name='FlightID_in_Countries_Count')
-
-# Merge this count back into the original dataframe
-df_reduced = df_reduced.merge(country_count_per_flight, on='Flight_ID')
-
-df_reduced = df_reduced[df_reduced['FlightID_in_Countries_Count'] >= 8]
-#Creating Journey_ID: Identifier for identical journeys (same departure and destination airport) on same days
-
-#Extracting departure and arrival days
-df_reduced["departure_date_day"] = df_reduced["departure_date"].dt.strftime('%d-%m-%Y')
-df_reduced["arrival_date_day"] = df_reduced["arrival_date"].dt.strftime('%d-%m-%Y')
-
-#Creating column for whole Journey
-df_reduced["Journey_route"] = df_reduced["departure_airport_code"] + "-" + df_reduced["destination_airport_code"]
-df_reduced["Journey_ID"] = df_reduced["Journey_route"] + ": " + df_reduced["departure_date_day"] + " "  + df_reduced["arrival_date_day"]
-
-#Creating Variables that analyse price differences between identical Flights**
-# Group by Flight_ID and calculate max, min prices and their absolute difference
-price_stats = df_reduced.groupby('Flight_ID')['Price_in_USD'].agg(['max', 'min'])
-price_stats['max_price_diff_FlightID'] = price_stats['max'] - price_stats['min']
-price_stats.columns = ['max_price_FlightID', 'min_price_FlightID', 'max_price_diff_FlightID']
-
-# Calculate the relative difference as a percentage of the min price
-price_stats['max_rel_price_diff_FlightID'] = (price_stats['max_price_diff_FlightID'] / price_stats['min_price_FlightID']) * 100
-df_reduced = pd.merge(df_reduced, price_stats, on='Flight_ID', how='left')
-df_reduced["abs_diff_to_min_price_FlightID"] = df_reduced["Price_in_USD"] - df_reduced["min_price_FlightID"]
-df_reduced["rel_diff_to_min_price_FlightID"] = ((df_reduced["Price_in_USD"] /df_reduced["min_price_FlightID"] ) -1) * 100
-df_reduced['rel_price_score_FlightID'] = df_reduced['rel_diff_to_min_price_FlightID'] / df_reduced['max_rel_price_diff_FlightID']
-
-
-#Creating Variables that analyse price differences between identical Journey**
-# Group by Flight_ID and calculate max, min prices and their absolute difference
-price_stats_journey = df_reduced.groupby('Journey_ID')['Price_in_USD'].agg(['max', 'min'])
-price_stats_journey['max_abs_diff_JourneyID'] = price_stats_journey['max'] - price_stats_journey['min']
-price_stats_journey.columns = ['max_price_JourneyID', 'min_price_JourneyID', 'max_abs_diff_JourneyID']
-price_stats_journey['max_rel_diff_Journey'] = (price_stats_journey['max_abs_diff_JourneyID'] / price_stats_journey['min_price_JourneyID']) * 100
-df_reduced = pd.merge(df_reduced, price_stats_journey, on='Journey_ID', how='left')
-
-df_reduced["abs_diff_to_min_price_JourneyID"] = df_reduced["Price_in_USD"] - df_reduced["min_price_JourneyID"]
-df_reduced["rel_diff_to_min_price_JourneyID"] = ((df_reduced["Price_in_USD"] /df_reduced["min_price_JourneyID"] ) -1) * 100
-df_reduced['rel_price_score_JourneyID'] = df_reduced['rel_diff_to_min_price_JourneyID'] / df_reduced['max_rel_diff_Journey']
-
-#Creating Variables that analyse price differences between identical Journey within the same query-country**
-price_stats_journey_same_country = df_reduced.groupby(['Journey_ID', 'Detected_Country'])['Price_in_USD'].agg(['max', 'min'])
-price_stats_journey_same_country['max_abs_diff_perIDGroup_Journey_same_country'] = price_stats_journey_same_country['max'] - price_stats_journey_same_country['min']
-price_stats_journey_same_country.columns = ['max_journey_same_country', 'min_journey_same_country', 'max_abs_diff_perIDGroup_Journey_same_country']
-price_stats_journey_same_country['max_rel_diff_perIDGroup_Journey_same_country'] = (price_stats_journey_same_country['max_abs_diff_perIDGroup_Journey_same_country'] / price_stats_journey_same_country['min_journey_same_country']) * 100
-
-df_reduced = pd.merge(df_reduced, price_stats_journey_same_country, on=['Journey_ID','Detected_Country'], how='left'
-                      
-                      )
-df_reduced["price_diff_loc_to_glob_Journey_min"] = df_reduced["min_journey_same_country"] - df_reduced["min_price_JourneyID"]
-df_reduced["rel_price_diff_loc_to_glob_Journey_min"] = (df_reduced["price_diff_loc_to_glob_Journey_min"] / df_reduced["min_price_JourneyID"]) * 100
-
-
-# Step 1: Filter to get rows where Price_in_USD equals the min for each Journey_ID
-cheapest_mask_journey = df_reduced['Price_in_USD'] == df_reduced['min_price_JourneyID']
-cheapest_journeys = df_reduced[cheapest_mask_journey]
-
-# Group by Flight_ID and select the first Detected_Country name alphabetically
-cheapest_locations_journey = cheapest_journeys.groupby('Journey_ID')['Detected_Country'].min().reset_index()
-
-# Rename the column for clarity
-cheapest_locations_journey.rename(columns={'Detected_Country': 'Cheapest_Location_Journey'}, inplace=True)
-
-# Step 2: Merge this information back with the original DataFrame
-df_reduced = df_reduced.merge(cheapest_locations_journey, on='Journey_ID', how='left')
+    if conversion_rate is None:
+        raise ValueError(f"Conversion rate for currency '{currency}' is not available.")
+    
+    return price * conversion_rate
 
 
 
-#Creating Variables that analyse price differences between identical Flights within the same query-country**
-cheapest_mask = df_reduced['Price_in_USD'] == df_reduced['min_price_FlightID']
-cheapest_flights = df_reduced[cheapest_mask]
-# Group by Flight_ID and select the first Detected_Country name alphabetically
-cheapest_locations = cheapest_flights.groupby('Flight_ID')['Detected_Country'].min().reset_index()
-# Rename the column for clarity
-cheapest_locations.rename(columns={'Detected_Country': 'Cheapest_Location_Flight'}, inplace=True)
-# Step 2: Merge this information back with the original DataFrame
-df_reduced = df_reduced.merge(cheapest_locations, on='Flight_ID', how='left')
+def convert_prices_to_usd(df, price_column, currency_column, conversion_rates):
+    """
+    Converts ticket prices from various currencies to USD, using the provided conversion rates.
+    """
+    df['Price_in_USD'] = df.apply(lambda row: convert_to_usd(row, price_column, currency_column, conversion_rates), axis=1)
+    return df
 
 
-# Calculate the average of rel_diff_to_min_price_FlightID for each Journey_ID and Detected_Country
-average_savings_route = df_reduced.groupby(['Journey_route', 'Detected_Country'])['rel_diff_to_min_price_FlightID'].mean().reset_index(name='average_savings_for_Journey_route_in_Detected_Country')
-# Merge the average_savings DataFrame back into df_reduced
-df_reduced = df_reduced.merge(average_savings_route, on=['Journey_route', 'Detected_Country'], how='left')
+def calculate_commute_time(df, arrival_date_col, departure_date_col):
+    """
+    Calculates the commute time in minutes.
+    """
+    df['commute_time'] = (df[arrival_date_col] - df[departure_date_col]).dt.total_seconds() / 60
+    return df
 
-cheapest_location_counts = df_reduced.groupby(['Journey_route', 'Detected_Country', 'Cheapest_Location_Flight']).size().reset_index(name='count_cheapest_location')
-# Ensure a randomized selection in case of ties by shuffling
-cheapest_location_counts = cheapest_location_counts.sample(frac=1).reset_index(drop=True)
-cheapest_location_counts_sorted = cheapest_location_counts.sort_values(['Journey_route', 'Detected_Country', 'count_cheapest_location'], ascending=[True, True, False])
-top_cheapest_location = cheapest_location_counts_sorted.groupby(['Journey_route', 'Detected_Country']).first().reset_index()
-top_cheapest_location["Mode_Cheapest_Location_Journey"] = top_cheapest_location["Cheapest_Location_Flight"]
-df_reduced = df_reduced.merge(top_cheapest_location[['Journey_route', 'Detected_Country', 'Mode_Cheapest_Location_Journey']], on=['Journey_route', 'Detected_Country'], how='left')
+def set_query_date_and_calculate_days_until_departure(df, departure_date_col, query_date):
+    """
+    Sets the query date for the dataset based on a given value and calculates the days until departure.
+    """
+    # Convert query_date string to datetime object
+    df['query_date'] = pd.to_datetime(query_date)
+    df['days_until_departure'] = (df[departure_date_col] - df['query_date']).dt.days
+    return df
 
 
-file_path = f'../data/4.processed_data/{args.filename}_processed.csv'
+def filter_by_country_variance(df, flight_id_col='Flight_ID', country_col='Detected_Country', min_countries=8):
+    """
+    Filters the DataFrame to include only those entries where the associated Flight_ID
+    has queries from at least `min_countries` different countries.
 
-df_reduced.to_csv(file_path, index=False)
+    Parameters:
+    - df: DataFrame to filter.
+    - flight_id_col: Name of the column in df that contains Flight_IDs.
+    - country_col: Name of the column in df that contains country names.
+    - min_countries: Minimum number of unique countries required to keep the Flight_ID in the dataset.
 
+    Returns:
+    - DataFrame filtered based on the specified country variance criterion.
+    """
+    # Count the number of different countries available per Flight_ID
+    country_count_per_flight = df.groupby(flight_id_col)[country_col].nunique().reset_index(name='FlightID_in_Countries_Count')
+
+    # Merge this count back into the original DataFrame
+    df = df.merge(country_count_per_flight, on=flight_id_col)
+
+    # Filter based on the minimum number of countries criterion
+    filtered_df = df[df['FlightID_in_Countries_Count'] >= min_countries]
+
+    return filtered_df
+
+
+def extract_dates(df):
+    df["departure_date_day"] = df["departure_date"].dt.strftime('%d-%m-%Y')
+    df["arrival_date_day"] = df["arrival_date"].dt.strftime('%d-%m-%Y')
+    return df
+
+def create_journey_id(df):
+    df["Journey_route"] = df["departure_airport_code"] + "-" + df["destination_airport_code"]
+    df["Journey_ID"] = df["Journey_route"] + ": " + df["departure_date_day"] + " " + df["arrival_date_day"]
+    return df
+
+def calculate_FlightID_price_stats(df):
+    price_stats = df.groupby('Flight_ID')['Price_in_USD'].agg(['max', 'min'])
+    price_stats['max_price_diff_FlightID'] = price_stats['max'] - price_stats['min']
+    price_stats.columns = ['max_price_FlightID', 'min_price_FlightID', 'max_price_diff_FlightID']
+    price_stats['max_rel_price_diff_FlightID'] = (price_stats['max_price_diff_FlightID'] / price_stats['min_price_FlightID']) * 100
+    df = pd.merge(df, price_stats, on='Flight_ID', how='left')
+    df["abs_diff_to_min_price_FlightID"] = df["Price_in_USD"] - df["min_price_FlightID"]
+    df["rel_diff_to_min_price_FlightID"] = ((df["Price_in_USD"] / df["min_price_FlightID"] ) -1) * 100
+    df['rel_price_score_FlightID'] = df['rel_diff_to_min_price_FlightID'] / df['max_rel_price_diff_FlightID']
+    return df
+
+def calculate_JourneyID_price_stats(df):    
+    price_stats_journey = df.groupby('Journey_ID')['Price_in_USD'].agg(['max', 'min'])
+    price_stats_journey['max_abs_diff_JourneyID'] = price_stats_journey['max'] - price_stats_journey['min']
+    price_stats_journey.columns = ['max_price_JourneyID', 'min_price_JourneyID', 'max_abs_diff_JourneyID']
+    price_stats_journey['max_rel_diff_Journey'] = (price_stats_journey['max_abs_diff_JourneyID'] / price_stats_journey['min_price_JourneyID']) * 100
+    df = pd.merge(df,price_stats_journey, on=['Journey_ID'], how='left')
+    df["abs_diff_to_min_price_JourneyID"] = df["Price_in_USD"] - df["min_price_JourneyID"]
+    df["rel_diff_to_min_price_JourneyID"] = ((df["Price_in_USD"] /df["min_price_JourneyID"] ) -1) * 100
+    df['rel_price_score_JourneyID'] = df['rel_diff_to_min_price_JourneyID'] / df['max_rel_diff_Journey']
+    return df
+
+
+def calculate_price_stats_for_JourneyID_same_country(df):
+    """
+    Calculate price statistics for identical journey IDs within the same query country.
+
+    Parameters:
+    - df: DataFrame containing the dataset.
+
+    Returns:
+    - DataFrame with additional columns for price statistics.
+    """
+    price_stats_journey_same_country = df.groupby(['Journey_ID', 'Detected_Country'])['Price_in_USD'].agg(['max', 'min'])
+    price_stats_journey_same_country['max_abs_diff_perIDGroup_Journey_same_country'] = price_stats_journey_same_country['max'] - price_stats_journey_same_country['min']
+    price_stats_journey_same_country.columns = ['max_journey_same_country', 'min_journey_same_country', 'max_abs_diff_perIDGroup_Journey_same_country']
+    price_stats_journey_same_country['max_rel_diff_perIDGroup_Journey_same_country'] = (price_stats_journey_same_country['max_abs_diff_perIDGroup_Journey_same_country'] / price_stats_journey_same_country['min_journey_same_country']) * 100
+
+    df = pd.merge(df, price_stats_journey_same_country, on=['Journey_ID','Detected_Country'], how='left')
+    df["price_diff_loc_to_glob_Journey_min"] = df["min_journey_same_country"] - df["min_price_JourneyID"]
+    df["rel_price_diff_loc_to_glob_Journey_min"] = (df["price_diff_loc_to_glob_Journey_min"] / df["min_price_JourneyID"]) * 100
+    
+    return df
+
+
+
+def identify_cheapest_location_JourneyID(df):
+    cheapest_mask = df['Price_in_USD'] == df['min_price_JourneyID']
+    cheapest_journeys = df[cheapest_mask]
+    cheapest_locations = cheapest_journeys.groupby('Journey_ID')['Detected_Country'].min().reset_index(name='Cheapest_Location_Journey')
+    return df.merge(cheapest_locations, on='Journey_ID', how='left')
+
+def identify_cheapest_location_FlightID(df):
+    cheapest_mask = df['Price_in_USD'] == df['min_price_FlightID']
+    cheapest_flights = df[cheapest_mask]
+    cheapest_locations = cheapest_flights.groupby('Flight_ID')['Detected_Country'].min().reset_index(name='Cheapest_Location_Flight')
+    return df.merge(cheapest_locations, on='Flight_ID', how='left')
+
+def calculate_average_savings_Journey_route(df):
+    average_savings = df.groupby(['Journey_route', 'Detected_Country'])['rel_diff_to_min_price_FlightID'].mean().reset_index(name='average_savings_for_Journey_route_in_Detected_Country')
+    return df.merge(average_savings, on=['Journey_route', 'Detected_Country'], how='left')
+
+def determine_mode_cheapest_location(df):
+    cheapest_location_counts = df.groupby(['Journey_route', 'Detected_Country', 'Cheapest_Location_Flight']).size().reset_index(name='count_cheapest_location')
+    cheapest_location_counts = cheapest_location_counts.sample(frac=1).reset_index(drop=True)
+    sorted_counts = cheapest_location_counts.sort_values(['Journey_route', 'Detected_Country', 'count_cheapest_location'], ascending=[True, True, False])
+    top_cheapest_location = sorted_counts.groupby(['Journey_route', 'Detected_Country']).first().reset_index()
+    top_cheapest_location["Mode_Cheapest_Location_Journey"] = top_cheapest_location["Cheapest_Location_Flight"]
+    return df.merge(top_cheapest_location[['Journey_route', 'Detected_Country', 'Mode_Cheapest_Location_Journey']], on=['Journey_route', 'Detected_Country'], how='left')
+
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Preprocess dataset with configuration.')
+    parser.add_argument('filename', help='The name of the file to be loaded')
+    args = parser.parse_args()
+
+    conversion_rates, query_date = load_initial_configuration(args.filename)
+
+    # Proceed with data loading, cleaning, feature engineering, and exporting...
+    #get path to data
+    df_path = get_absolute_path(f'../data/3.raw_query_results/{args.filename}')
+    df = load_dataset(df_path)
+
+    # Feature Engineering 
+    df = create_flight_id(df)
+    df = convert_date_columns(df)
+    df = remove_duplicates_and_erroneous_rows(df)
+    df = convert_prices_to_usd(df, 'ticket_price', 'Detected_Currency', conversion_rates)
+    df = calculate_commute_time(df, 'arrival_date', 'departure_date')
+    df = set_query_date_and_calculate_days_until_departure(df, 'departure_date', query_date)
+    df = filter_by_country_variance(df,min_countries=8)
+    df = extract_dates(df)
+    df = create_journey_id(df)
+    df = calculate_FlightID_price_stats(df)
+    df = calculate_JourneyID_price_stats(df)
+    df = identify_cheapest_location_FlightID(df)
+    df = identify_cheapest_location_JourneyID(df)
+    df = calculate_price_stats_for_JourneyID_same_country(df)
+    df = calculate_average_savings_Journey_route(df)
+    df = determine_mode_cheapest_location(df)
+
+    # Export data
+    Output_path = get_absolute_path(f'../data/4.processed_data/Processed_{args.filename}')
+    df.to_csv(Output_path, index=False)
+
+if __name__ == "__main__":
+    main()
