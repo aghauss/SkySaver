@@ -270,10 +270,27 @@ def identify_cheapest_location_JourneyID(df):
     return df.merge(cheapest_locations, on='Journey_ID', how='left')
 
 def identify_cheapest_location_FlightID(df):
-    cheapest_mask = df['Price_in_USD'] == df['min_price_FlightID']
-    cheapest_flights = df[cheapest_mask]
-    cheapest_locations = cheapest_flights.groupby('Flight_ID')['Detected_Country'].min().reset_index(name='Cheapest_Location_Flight')
-    return df.merge(cheapest_locations, on='Flight_ID', how='left')
+    # Identifying flights with max_rel_price_diff_FlightID < 1.5 and setting their cheapest locations to None
+    df['Cheapest_Location_Flight'] = 'No Differences'  # Initialize all to None
+    flights_with_high_diff = df[df['max_rel_price_diff_FlightID'] >= 1.5]['Flight_ID'].unique()
+    
+    # Filter the DataFrame for flights with max_rel_price_diff_FlightID >= 1.5 before proceeding with the original logic
+    filtered_df = df[df['Flight_ID'].isin(flights_with_high_diff)]
+    cheapest_mask = filtered_df['Price_in_USD'] == filtered_df['min_price_FlightID']
+    cheapest_flights = filtered_df[cheapest_mask]
+    cheapest_locations = cheapest_flights.groupby('Flight_ID')['Detected_Country'].min().reset_index(name='Cheapest_Location_Flight_temp')
+
+    # Merge the original df with the cheapest locations using a temporary column to avoid overwriting the None values
+    updated_df = df.merge(cheapest_locations, on='Flight_ID', how='left')
+    
+    # Now, update the 'Cheapest_Location_Flight' column only where 'Cheapest_Location_Flight_temp' is not null
+    updated_df.loc[updated_df['Cheapest_Location_Flight_temp'].notnull(), 'Cheapest_Location_Flight'] = updated_df['Cheapest_Location_Flight_temp']
+    updated_df.drop(columns=['Cheapest_Location_Flight_temp'], inplace=True)  # Cleanup the temporary column
+
+    return updated_df
+
+
+
 
 def calculate_average_savings_Journey_route(df):
     average_savings = df.groupby(['Journey_route', 'Detected_Country'])['rel_diff_to_min_price_FlightID'].mean().reset_index(name='average_savings_for_Journey_route_in_Detected_Country')
