@@ -3,7 +3,10 @@ import json
 import os
 import ast
 import pandas as pd
+import numpy as np
 from datetime import datetime
+from scipy.stats import trim_mean
+
 
 def get_absolute_path(relative_path):
     """
@@ -304,6 +307,38 @@ def determine_mode_cheapest_location(df):
     top_cheapest_location["Mode_Cheapest_Location_Journey"] = top_cheapest_location["Cheapest_Location_Flight"]
     return df.merge(top_cheapest_location[['Journey_route', 'Detected_Country', 'Mode_Cheapest_Location_Journey']], on=['Journey_route', 'Detected_Country'], how='left')
 
+def calculate_savings_metrics(df):
+    # Mean Savings for JourneyID
+    mean_savings_journeyID = df.groupby(['Journey_ID', 'Detected_Country'])['rel_diff_to_min_price_FlightID'].mean().reset_index(name='mean_savings_for_JourneyID_in_Detected_Country')
+    df = df.merge(mean_savings_journeyID, on=['Journey_ID', 'Detected_Country'], how='left')
+
+    # Trimmed Mean Savings for JourneyID
+    trimmed_savings_journeyID = df.groupby(['Journey_ID', 'Detected_Country'])['rel_diff_to_min_price_FlightID'].apply(lambda x: trim_mean(x, proportiontocut=0.1)).reset_index(name='trimmed_mean_savings_for_JourneyID_in_Detected_Country')
+    df = df.merge(trimmed_savings_journeyID, on=['Journey_ID', 'Detected_Country'], how='left')
+
+    # Log of Mean Savings for JourneyID
+    df['log_mean_savings_for_JourneyID_in_Detected_Country'] = np.log(df['mean_savings_for_JourneyID_in_Detected_Country'] + 1)
+
+    # Mean Savings for JourneyRoute
+    mean_savings_journey_route = df.groupby(['Journey_route', 'Detected_Country'])['rel_diff_to_min_price_FlightID'].mean().reset_index(name='mean_savings_for_Journey_route_in_Detected_Country')
+    df = df.merge(mean_savings_journey_route, on=['Journey_route', 'Detected_Country'], how='left')
+
+    # Trimmed Mean Savings for JourneyRoute
+    trimmed_savings_journey_route = df.groupby(['Journey_route', 'Detected_Country'])['rel_diff_to_min_price_FlightID'].apply(lambda x: trim_mean(x, proportiontocut=0.1)).reset_index(name='trimmed_mean_savings_for_Journey_route_in_Detected_Country')
+    df = df.merge(trimmed_savings_journey_route, on=['Journey_route', 'Detected_Country'], how='left')
+
+    # Log of Trimmed Mean Savings for JourneyRoute
+    df['log_mean_savings_for_Journey_route_in_Detected_Country'] = np.log(df['trimmed_mean_savings_for_Journey_route_in_Detected_Country'] + 1)
+
+    # Median Savings for JourneyRoute
+    median_savings_journey_route = df.groupby(['Journey_route', 'Detected_Country'])['rel_diff_to_min_price_FlightID'].median().reset_index(name='median_savings_for_Journey_route_country')
+    df = df.merge(median_savings_journey_route, on=['Journey_route', 'Detected_Country'], how='left')
+
+    # Normalized Mean Savings
+    df['normalized_mean_savings'] = df[['mean_savings_for_JourneyID_in_Detected_Country', 'median_savings_for_Journey_route_country']].mean(axis=1)
+    
+    return df
+
 
 
 def main():
@@ -335,6 +370,8 @@ def main():
     df = calculate_price_stats_for_JourneyID_same_country(df)
     df = calculate_average_savings_Journey_route(df)
     df = determine_mode_cheapest_location(df)
+    df = calculate_savings_metrics(df)
+
 
     # Export data
     Output_path = get_absolute_path(f'../data/4.processed_data/Processed_{args.filename}')
