@@ -334,6 +334,10 @@ def calculate_savings_metrics(df):
     median_savings_journey_route = df.groupby(['Journey_route', 'Detected_Country'])['rel_diff_to_min_price_FlightID'].median().reset_index(name='median_savings_for_Journey_route_country')
     df = df.merge(median_savings_journey_route, on=['Journey_route', 'Detected_Country'], how='left')
 
+    # Median Savings for JourneyRoute
+    median_savings_JourneyID = df.groupby(['Journey_ID', 'Detected_Country'])['rel_diff_to_min_price_FlightID'].median().reset_index(name='median_savings_for_JourneyID_country')
+    df = df.merge(median_savings_JourneyID, on=['Journey_route', 'Detected_Country'], how='left')
+
     # Normalized Mean Savings
     df['normalized_mean_savings'] = df[['mean_savings_for_JourneyID_in_Detected_Country', 'median_savings_for_Journey_route_country']].mean(axis=1)
     
