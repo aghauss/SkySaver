@@ -6,7 +6,7 @@ authors = ["Arash"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.9,<3.9.7 || >3.9.7,<3.13"
 httpx = "^0.26.0"
 playwright = "^1.41.2"
 bs4 = "^0.0.2"
@@ -21,10 +21,11 @@ xgboost = "^2.0.3"
 hyperopt = "^0.2.7"
 pkg = "^0.2"
 bayesian-optimization = "^1.4.3"
-pycaret = "^2.2"
 optuna = "^3.5.0"
 forex-python = "^1.8"
 lightgbm = "^4.3.0"
+numpy = "^1.26.4"
+streamlit = "^1.32.2"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.2"
