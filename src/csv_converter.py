@@ -309,7 +309,7 @@ def main():
     # Save the combined DataFrame to a CSV file
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
-    output_file_path = os.path.join(output_directory, "Query6_results.csv")
+    output_file_path = os.path.join(output_directory, "Query2603_results.csv")
     df_combined.to_csv(output_file_path, index=False)
 
 if __name__ == "__main__":
