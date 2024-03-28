@@ -274,7 +274,7 @@ def identify_cheapest_location_JourneyID(df):
 
 def identify_cheapest_location_FlightID(df):
     # Identifying flights with max_rel_price_diff_FlightID < 1.5 and setting their cheapest locations to None
-    df['Cheapest_Location_Flight'] = 'No Differences'  # Initialize all to None
+    df['Cheapest_Location_Flight'] = 'No Significant Difference Found'  # Initialize all to None
     flights_with_high_diff = df[df['max_rel_price_diff_FlightID'] >= 1.5]['Flight_ID'].unique()
     
     # Filter the DataFrame for flights with max_rel_price_diff_FlightID >= 1.5 before proceeding with the original logic
@@ -306,6 +306,16 @@ def determine_mode_cheapest_location(df):
     top_cheapest_location = sorted_counts.groupby(['Journey_route', 'Detected_Country']).first().reset_index()
     top_cheapest_location["Mode_Cheapest_Location_Journey"] = top_cheapest_location["Cheapest_Location_Flight"]
     return df.merge(top_cheapest_location[['Journey_route', 'Detected_Country', 'Mode_Cheapest_Location_Journey']], on=['Journey_route', 'Detected_Country'], how='left')
+
+def determine_mode_cheapest_location_JourneyID(df):
+    cheapest_location_counts = df.groupby(['Journey_ID', 'Detected_Country', 'Cheapest_Location_Flight']).size().reset_index(name='count_cheapest_location')
+    cheapest_location_counts = cheapest_location_counts.sample(frac=1).reset_index(drop=True)
+    sorted_counts = cheapest_location_counts.sort_values(['Journey_ID', 'Detected_Country', 'count_cheapest_location'], ascending=[True, True, False])
+    top_cheapest_location = sorted_counts.groupby(['Journey_ID', 'Detected_Country']).first().reset_index()
+    top_cheapest_location["Mode_Cheapest_Location_JourneyID"] = top_cheapest_location["Cheapest_Location_Flight"]
+    return df.merge(top_cheapest_location[['Journey_ID', 'Detected_Country', 'Mode_Cheapest_Location_JourneyID']], on=['Journey_ID', 'Detected_Country'], how='left')
+
+
 
 def calculate_savings_metrics(df):
     # Mean Savings for JourneyID
@@ -364,7 +374,7 @@ def main():
     df = convert_prices_to_usd(df, 'ticket_price', 'Detected_Currency', conversion_rates)
     df = calculate_commute_time(df, 'arrival_date', 'departure_date')
     df = set_query_date_and_calculate_days_until_departure(df, 'departure_date', query_date)
-    df = filter_by_country_variance(df,min_countries=8)
+    df = filter_by_country_variance(df,min_countries=7)
     df = extract_dates(df)
     df = create_journey_id(df)
     df = calculate_FlightID_price_stats(df)
@@ -374,6 +384,7 @@ def main():
     df = calculate_price_stats_for_JourneyID_same_country(df)
     df = calculate_average_savings_Journey_route(df)
     df = determine_mode_cheapest_location(df)
+    df = determine_mode_cheapest_location_JourneyID(df)
     df = calculate_savings_metrics(df)
 
 

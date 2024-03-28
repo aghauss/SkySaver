@@ -1,0 +1,20 @@
+{
+    "regression": {
+        "n_estimators": 100,
+        "max_depth": 20,
+        "min_samples_split": 2,
+        "min_samples_leaf": 1,
+        "max_features": 0.1,
+        "bootstrap": true,
+        "max_leaf_nodes": null
+    },
+    "classification": {
+        "n_estimators": 100,
+        "max_depth": 20,
+        "min_samples_split": 2,
+        "min_samples_leaf": 1,
+        "max_features": "sqrt",
+        "bootstrap": false,
+        "max_leaf_nodes": null
+    }
+}
