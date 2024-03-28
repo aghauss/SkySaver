@@ -4,6 +4,10 @@ from datetime import datetime, date
 from pycaret.classification import load_model as load_classification_model
 from pycaret.regression import load_model as load_regression_model
 
+
+# Set page width to 1200 pixels
+st.set_page_config(layout="wide")
+
 # Caching the model loading using the appropriate Streamlit caching command
 @st.cache_resource
 def load_cached_classification_model():
@@ -40,32 +44,74 @@ def predict(departure_airport_code, destination_airport_code, days_until_departu
     
     return classification_prediction, regression_prediction
 
+departure_options = ["MUC", "BER", "CDG"]
+destination_options = ["MUC", "BER", "CDG"]
+country_options = ["Germany","UK"]
+
 st.title("SkySaver")
-st.subheader("Find out how much you could save for your next flight by switching your IP-Location")
+st.markdown("###### Find out how much you could save for your next flight by switching your IP-Location 💩")
 
-departure_airport_code = st.text_input("Departure Airport Code", help="Enter the 3-letter airport code.")
-destination_airport_code = st.text_input("Destination Airport Code", help="Enter the 3-letter airport code.")
 
-# Using a date input for selecting both departure and return dates, ensuring they're chosen
-date_range = st.date_input("Select your departure and return dates", [], help="Select your departure and return dates.")
+destination_airport_mapper = {
+    "Munich (MUC)": "MUC",
+    "Berlin (BER)": "BER",
+    "Frankfurt (FRA)": "FRA",
+}
 
+departure_airport_mapper = {
+    "Munich (MUC)": "MUC",
+    "Berlin (BER)": "BER",
+    "Frankfurt (FRA)": "FRA",
+}
+
+
+
+
+# Create a container, then create three columns within that container
+with st.container():
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        departure_airport_code = st.selectbox("Departure City",list(destination_airport_mapper.keys()), help="From where do you want to departure?.")
+     
+
+    with col2:
+        destination_airport_code = st.selectbox("Destination City",list(departure_airport_mapper.keys()) ,help="Enter your destination goal")
+
+    with col3:
+        date_range = st.date_input("Select your departure and return dates", [], help="When do you want to travel?")
+
+
+
+
+reverse_country_mapper = {
+    "Polska": "Poland",
+    "France": "France",
+    "No Significant Difference Found" : "No cheaper country found ☹️"
+}
+
+# Your existing code
 if len(date_range) == 2:
-    departure_date, return_date = date_range[0], date_range[-1]
+    departure_date, return_date = date_range[0], date_range[1]
     current_date = datetime.now().date()
     if departure_date < current_date or return_date < departure_date:
         st.error("Departure and return dates must be in the future and the return date must be after the departure date.")
     else:
-        # Calculate days until departure
-        days_until_departure = (departure_date - date.today()).days
-        detected_country = st.text_input("Detected Country", help="Country detected from your current location or preference.")
+        days_until_departure = (departure_date - current_date).days
+        detected_country_model_output = st.selectbox("Your current location", country_options, help="Country detected from your current location or preference.")
+
+        # Map model output to user-friendly format using the reverse mapper dictionary
+        detected_country = reverse_country_mapper.get(detected_country_model_output, detected_country_model_output)
 
         if st.button("Show Savings Potential"):
             with st.spinner('Calculating...'):
                 classification_result, regression_result = predict(departure_airport_code, destination_airport_code, days_until_departure, detected_country)
-            st.success("Calculation complete!")
-            st.metric(label="Cheapest Country for your Flight", value=classification_result[0])
-            if regression_result:
+
+            # Map classification result to user-friendly format using the reverse mapper dictionary
+            classification_result_friendly = reverse_country_mapper.get(classification_result[0], classification_result[0])
+            st.metric(label="Cheapest Country for your Flight", value=classification_result_friendly)
+            if regression_result[0] != 0:  # assuming regression_result = [0] indicates no savings
                 formatted_regression_result = f"{regression_result[0]:.1f}%"
                 st.metric(label="Saving Potential", value=formatted_regression_result)
             else:
-                st.metric(label="Saving Potential", value="N/A")
+                st.metric(label="Saving Potential", value="0%")
