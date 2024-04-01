@@ -12,6 +12,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 classification_model_path = os.path.join(BASE_DIR, '../models/classification_model')
 regression_model_path = os.path.join(BASE_DIR, '../models/regression_model')
 mappers_path = os.path.join(BASE_DIR, 'mappers.json')
+logo_background_path = os.path.join(BASE_DIR, 'design/logo_background.png')
+transparent_logo_path = os.path.join(BASE_DIR, 'design/transparent_logo_hd.png')
 
 @st.cache_data
 def load_mappers(filename):
@@ -19,7 +21,7 @@ def load_mappers(filename):
         mappers = json.load(file)
     return mappers
 
-st.set_page_config(page_title='SkySaver', page_icon='logo_background.png',layout= "wide")
+st.set_page_config(page_title='SkySaver', page_icon = logo_background_path,layout= "wide")
 
 # Caching the model loading using the appropriate Streamlit caching command
 @st.cache_resource
@@ -86,7 +88,12 @@ reverse_country_mapper = mappers["reverse_country_mapper"]
 col1, col2 = st.columns([1, 13]) 
 
 # Display the image in the first column with a set width
-#col1.image('transparent_logo_hd.png', width=100)
+
+#col1.image(transparent_logo_path, width=100)
+logo_base64 = get_base64_of_bin_file(transparent_logo_path)
+st.markdown(f"<img src='data:image/png;base64,{logo_base64}' style='width: 100%; height: auto;' alt='logo'>", unsafe_allow_html=True)
+
+
 
 # Display the title in the second column
 col2.title('SkySaver')
