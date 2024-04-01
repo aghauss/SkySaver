@@ -1,10 +1,17 @@
 import base64
 import json
+import os
 import streamlit as st
 import pandas as pd
 from datetime import datetime, date
 from pycaret.classification import load_model as load_classification_model
 from pycaret.regression import load_model as load_regression_model
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+classification_model_path = os.path.join(BASE_DIR, 'models/classification_model')
+regression_model_path = os.path.join(BASE_DIR, 'models/regression_model')
+mappers_path = os.path.join(BASE_DIR, 'mappers.json')
 
 @st.cache_data
 def load_mappers(filename):
@@ -17,11 +24,11 @@ st.set_page_config(page_title='SkySaver', page_icon='logo_background.png',layout
 # Caching the model loading using the appropriate Streamlit caching command
 @st.cache_resource
 def load_cached_classification_model():
-    return load_classification_model('../models/classification_model')
+    return load_classification_model(classification_model_path)
 
 @st.cache_resource
 def load_cached_regression_model():
-    return load_regression_model('../models/regression_model')
+    return load_regression_model(regression_model_path)
 
 classification_model = load_cached_classification_model()
 regression_model = load_cached_regression_model()
@@ -46,12 +53,12 @@ def predict(departure_airport_code, destination_airport_code, days_until_departu
         'days_until_departure': [days_until_departure]
     })
 
-    print("Classifier Input Data:")
-    print(input_data_classifier)
+    #print("Classifier Input Data:")
+    #print(input_data_classifier)
     
     classification_prediction = classification_model.predict(input_data_classifier)
-    print("Classifier Output:")
-    print(classification_prediction)
+    #print("Classifier Output:")
+    #print(classification_prediction)
 
     if classification_prediction[0] == "No Significant Difference Found":
         regression_prediction = [0]  # Skipping regression model
@@ -67,8 +74,8 @@ def predict(departure_airport_code, destination_airport_code, days_until_departu
     
     return classification_prediction, regression_prediction
 
-mappers = load_mappers("mappers.json")
-# Access a specific mapper
+# Access the mappers
+mappers = load_mappers(mappers_path)
 country_mapper = mappers["country_mapper"]
 departure_airport_mapper = mappers["departure_airport_mapper"]
 destination_airport_mapper = mappers["destination_airport_mapper"]
