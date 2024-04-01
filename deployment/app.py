@@ -86,7 +86,7 @@ reverse_country_mapper = mappers["reverse_country_mapper"]
 col1, col2 = st.columns([1, 13]) 
 
 # Display the image in the first column with a set width
-col1.image('transparent_logo_hd.png', width=100)
+#col1.image('transparent_logo_hd.png', width=100)
 
 # Display the title in the second column
 col2.title('SkySaver')
