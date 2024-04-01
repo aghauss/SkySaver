@@ -91,7 +91,7 @@ col1, col2 = st.columns([1, 13])
 
 #col1.image(transparent_logo_path, width=100)
 logo_base64 = get_base64_of_bin_file(transparent_logo_path)
-st.markdown(f"<img src='data:image/png;base64,{logo_base64}' style='width: 100%; height: auto;' alt='logo'>", unsafe_allow_html=True)
+col1.markdown(f"<img src='data:image/png;base64,{logo_base64}' style='width: 100%; height: 50%;' alt='logo'>", unsafe_allow_html=True)
 
 
 
