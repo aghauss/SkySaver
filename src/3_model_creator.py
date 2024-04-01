@@ -1,8 +1,8 @@
 import argparse
 import os
 import pandas as pd
-from pycaret.regression import setup as setup_regression, create_model as create_model_regression, save_model as save_model_regression
-from pycaret.classification import setup as setup_classification, create_model as create_model_classification, save_model as save_model_classification
+from pycaret.regression import setup as setup_regression, create_model as create_model_regression, save_model as save_model_regression, finalize_model as finalize_model_regression
+from pycaret.classification import setup as setup_classification, create_model as create_model_classification, save_model as save_model_classification, finalize_model as finalize_model_classification
 import json
 
 def get_absolute_path(relative_path):
@@ -18,12 +18,14 @@ def load_dataset(df_path):
 
 def train_and_save_model(df, target, model_type, hyperparameters, model_save_path):
     if model_type == 'regression':
-        setup_regression(data=df, target=target, fold=20, session_id=123, verbose=False)
+        setup_regression(data=df, target=target, fold=10, session_id=123, verbose=False)
         model = create_model_regression('et', **hyperparameters['regression'])
-        save_model_regression(model, model_save_path)
+        final_model = finalize_model_regression(model)
+        save_model_regression(final_model, model_save_path)
     elif model_type == 'classification':
-        setup_classification(data=df, target=target, fold=20, session_id=123, verbose=False)
+        setup_classification(data=df, target=target, fold=10, session_id=123, verbose=False)
         model = create_model_classification('et', **hyperparameters['classification'])
+        final_model = finalize_model_classification(model)
         save_model_classification(model, model_save_path)
     else:
         raise ValueError("Invalid model type specified. Choose 'regression' or 'classification'.")
@@ -50,7 +52,7 @@ def main():
     train_and_save_model(df_regression, regression_target, 'regression', hyperparameters, os.path.join(args.model_save_path, "regression_model"))
 
     classification_target = 'Mode_Cheapest_Location_Journey'
-    classification_columns_to_keep = ['departure_airport_code', 'destination_airport_code', 'Detected_Country', classification_target]
+    classification_columns_to_keep = ['departure_airport_code', 'destination_airport_code', 'Detected_Country','days_until_departure', classification_target]
     df_classification = df_train.loc[:, classification_columns_to_keep]
     train_and_save_model(df_classification, classification_target, 'classification', hyperparameters, os.path.join(args.model_save_path, "classification_model"))
 
