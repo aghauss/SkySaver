@@ -9,8 +9,8 @@ from pycaret.regression import load_model as load_regression_model
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-classification_model_path = os.path.join(BASE_DIR, 'models/classification_model')
-regression_model_path = os.path.join(BASE_DIR, 'models/regression_model')
+classification_model_path = os.path.join(BASE_DIR, '../models/classification_model')
+regression_model_path = os.path.join(BASE_DIR, '../models/regression_model')
 mappers_path = os.path.join(BASE_DIR, 'mappers.json')
 
 @st.cache_data
