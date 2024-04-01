@@ -6,3 +6,5 @@ notes.txt
 tests/
 experimental_notebooks/
 src/logs.log
+models/notepad.ipynb
+models/notepad_copy.ipynb
