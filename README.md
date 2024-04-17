@@ -1,5 +1,6 @@
 
-# Skysaver![logo_background](https://github.com/aghauss/SkySaver/assets/148491489/a2c9c3b5-0578-4bd6-96d0-15197f4aecde)
+# Skysaver!
+![unnamed](https://github.com/aghauss/SkySaver/assets/148491489/8c89cab7-c542-4ca5-8b43-6d2cf1c3b9f7)
 
 
 ## Description
