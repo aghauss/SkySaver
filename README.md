@@ -30,7 +30,9 @@ The repository contains all scripts to replicate the tool by rerunning the websc
 ### Prerequisites
 
 - Python 3.8 or newer
-- List of residential proxies for the webscraper (most providers charge a fee per GB of traffic)
+- List of residential proxies for the webscraper 
+- List of custom headers for the webscraper
+- List of queries for the webscraper
 
 ### Installation
 
@@ -45,27 +47,49 @@ cd Skysaver
    pip install -r requirements.txt
 ```
 
-### Setup
+## Setup Instructions
 
-In order to run the webscraper it is necessary to provide a JSON configuration file that contains the list of proxy servers to connect to. An exemplrary entry looks like this:
+To successfully run the webscraper, you must provide several configuration files. Below are the necessary steps and formats for these files:
 
-{"server": "pr.oxylabs.io:7777", "username": "aghss", "password": "DamnSon31er_", "country": "RD"}
+### 1. Proxy Configuration
 
-Additionally it is necessary to provide the query JSON file, which contains the list of queries. One entry should contain the name of the deprature airport, the destination airport, the departure date and the destination date. As an example:
+Create a JSON file to list proxy servers. This file should contain multiple entries if multiple proxies are to be used. Here's an example of what an entry should look like:
 
- {
-        "departure": "DEN",
-        "destination": "SFO",
-        "departure_date": "28.03.2024",
-        "return_date": "06.05.2024"
-    },
+```json
+{
+    "server": "pr.prorxyprovider.io:1234",
+    "username": "user",
+    "password": "passwrt",
+    "country": "RD"
+}
+```
+Ensure that the proxy details such as server address, username, password, and country code are correctly formatted.
 
-Lastly, it is necessary to provide custom headers to the webscraper. Custom headers incorporate typically browser configuration of the country that the webscrapes is relocated to. A custom header should look like this:
+### 2. Query JSON File
 
+Provide a separate JSON file that contains the list of queries for the webscraper. Each query should include the departure and destination airports, along with the departure and return dates. For instance:
+
+```json
+{
+    "departure": "DEN",
+    "destination": "SFO",
+    "departure_date": "28.03.2024",
+    "return_date": "06.05.2024"
+}
+```
+
+This file will guide the webscraper on what flight details to look for and during which dates.
+
+
+### 3. Custom Headers
+Custom headers are necessary to mimic the browser configuration based on the target country of the webscraper. These headers should be adjusted according to the proxy location. An example entry for Great Britain might look like:
+
+```json
 "GB": {
-      "Accept-Language": "en-GB,en;q=0.9",
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15"
-    },
+    "Accept-Language": "en-GB,en;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15"
+}
+```
 
 ## Usage
 
