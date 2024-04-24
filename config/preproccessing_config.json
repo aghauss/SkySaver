@@ -19,6 +19,10 @@
         "Query_2603.csv": {
             "conversion_rate_file": "../data/5.conversion_rates/conversion_2603.json",
             "query_date": "2024-03-27T22:15:00"  
+        },
+        "Query_0304.csv": {
+            "conversion_rate_file": "../data/5.conversion_rates/conversion_0304.json",
+            "query_date": "2024-04-02T22:15:00"  
         }
     }
 }

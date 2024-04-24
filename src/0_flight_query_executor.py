@@ -99,7 +99,7 @@ async def launch_browser(proxy_config):
             "server": proxy_config["server"],
             "username": proxy_config["username"],
             "password": proxy_config["password"]
-        }, headless=True)
+        }, headless=False)
     return browser
 
 
@@ -119,7 +119,7 @@ async def main(departure, destination, departure_date, return_date, proxy_config
             "server": proxy_config["server"],
             "username": proxy_config["username"],
             "password": proxy_config["password"]
-        }, headless=True)
+        }, headless=False)
 
 
         print("Creating incognito browser context with custom user agent")
@@ -193,8 +193,8 @@ async def main(departure, destination, departure_date, return_date, proxy_config
         # Wait for a moment to see the result
         await asyncio.sleep(2)
         await page.keyboard.press('Enter')
-        await asyncio.sleep(12)
-
+        await asyncio.sleep(25)
+        await save_html(page, departure, destination, departure_date, return_date,country_id)
         # Correctly closing context and browser at the end of the function.
         await context.close()
         await browser.close()

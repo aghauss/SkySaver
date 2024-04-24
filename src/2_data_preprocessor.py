@@ -14,6 +14,7 @@ def get_absolute_path(relative_path):
     """
     # Determine the directory of this script:
     script_dir = os.path.dirname(os.path.abspath(__file__))
+    print(f"Debug: Attempting to join script_dir: '{script_dir}' with relative_path: '{relative_path}'")  # Debug print statement
     # Build an absolute path by combining the script's directory with the relative path:
     return os.path.join(script_dir, relative_path)
 

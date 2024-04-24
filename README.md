@@ -1,11 +1,16 @@
-
-# Skysaver!
-![unnamed](https://github.com/aghauss/SkySaver/assets/148491489/8c89cab7-c542-4ca5-8b43-6d2cf1c3b9f7)
+<div style="display: flex; align-items: center;">
+    <img src="https://github.com/aghauss/SkySaver/assets/148491489/8c89cab7-c542-4ca5-8b43-6d2cf1c3b9f7" alt="Skysaver Logo" width="100" style="margin-right: 10px;">
+    <h1>Skysaver</h1>
+</div>
 
 
 ## Description
 
-Skysaver is an innovative application designed to help users optimize their flight costs by leveraging IP location switching. By querying flight prices across a multitude of countries, Skysaver identifies potential savings opportunities, enabling users to make more informed decisions on flight bookings. At its core, Skysaver utilizes a sophisticated web crawler that runs identical flight queries on Google Flights from various countries, compiling a comprehensive dataset. This dataset undergoes a meticulous preprocessing pipeline to create a final training set for a predictive model, which then guides users on whether switching their IP location could result in cost savings for their flight.
+Skysaver is an application designed to help users optimize their flight costs by leveraging IP location switching. 
+
+By querying flight prices across a multitude of countries, Skysaver identifies potential savings opportunities, enabling users to make more informed decisions on flight bookings. 
+
+At its core, Skysaver utilizes a sophisticated web crawler that runs identical flight queries on Google Flights from various countries, compiling a comprehensive dataset. This dataset undergoes a meticulous preprocessing pipeline to create a final training set for a predictive model, which then guides users on whether switching their IP location could result in cost savings for their flight.
 
 ## Features
 
@@ -73,14 +78,3 @@ python flight_query_executor.py --flight-query your_query.json
 
 Replace `your_config.json`, `your_query.json`, and other placeholders with actual file names or arguments as per your setup and requirements.
 
-## Contributing
-
-Contributions to Skysaver are welcome! If you have ideas for improvement or want to contribute code, please fork the repository and submit a pull request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE.md file for details.
-
-## Acknowledgments
-
-- Thanks to all the contributors and the community for the insights and support in developing Skysaver.
