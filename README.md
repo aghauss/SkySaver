@@ -42,13 +42,13 @@ git clone https://yourrepositoryurl/Skysaver.git
 cd Skysaver
 ```
 2. Create a virtual enviroment and activate it (for macOS and Linux)
-    ```zsh
-    python -m venv skysaver-env
-    source skysaver/bin/activate
-
-4. Install the required Python packages:
 ```bash
-   pip install -r requirements.txt
+python -m venv skysaver-env
+source skysaver-env/bin/activate
+```
+3. Install the required Python packages:
+```bash
+pip install -r requirements.txt
 ```
 
 ## Setup Instructions
@@ -98,7 +98,7 @@ Custom headers are necessary to mimic the browser configuration based on the tar
 
 ## Usage
 
-Follow the steps below to start leveraging Skysaver for your flight queries:
+Follow the steps below to start rebuilding Skysaver with your own flight queries:
 
 1. Navigate to the `src` directory:
 ```bash
@@ -109,12 +109,12 @@ cd src
 python 0_flight_query_executor.py --proxy_file your_proxy_list.json --query_file your_query_list.json --headers_file your_headers_list.json
 ```
 
-3. Run the web crawler to collect flight data (Note: This step requires appropriate configurations for IP switching):
+3. Run the converter to transform the scraped data (html,json) into csv:
 ```bash
 python 1_csv_converter.py 
 ```
 
-3. Preprocess the collected data to prepare the training dataset:
+3. Preprocess the collected data to extract the features and prepare the training dataset:
 ```bash
 python 2_data_preprocessor.py
 ```
@@ -129,13 +129,5 @@ python 3_model_creator.py
 python 4_model_creator.py --testfile your_test.csv
 ```
 
-Replace `your_config.json`, `your_query.json`, and other placeholders with actual file names or arguments as per your setup and requirements.
+Replace `your_proxy_list.json`, `your_query_list.json `, `your_headers_list.json` and `your_test.csv` with actual file names or arguments as per your setup and requirements.
 
-
-
-## Technologies Used
-
-- Python
-- Playwright for Python (for asynchronous web scraping)
-- PyCaret (for machine learning model creation and evaluation)
-- Pandas (for data manipulation)
