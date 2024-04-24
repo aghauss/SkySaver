@@ -29,7 +29,7 @@ The repository contains all scripts to replicate the tool by rerunning the websc
 
 ### Prerequisites
 
-- Python 3.8 or newer
+- Python 3.10 or newer
 - List of residential proxies for the webscraper 
 - List of custom headers for the webscraper
 - List of queries for the webscraper
