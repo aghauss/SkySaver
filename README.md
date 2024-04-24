@@ -12,6 +12,7 @@ Skysaver consists of an end-user application where users can enter their desired
 
 The repository contains all scripts to replicate the tool by rerunning the webscraper to generate a sufficient dataset and retrain the model. The applications is based on an ExtraTreeRegressor Model prediciting the potential saving in % and a ExtreTreaClassification Model prediciting the country with the highest saving potential.
 
+<img width="1414" alt="image" src="https://github.com/aghauss/SkySaver/assets/148491489/b38fcf7e-c41a-409d-9472-23349c449d6a">
 
 
 ## Features
@@ -22,12 +23,7 @@ The repository contains all scripts to replicate the tool by rerunning the websc
 - A comprehensive data preprocessing pipeline to prepare the training dataset.
 - Predictive modeling to inform users of potential savings through IP location switching.
 
-## Technologies Used
 
-- Python
-- Playwright for Python (for asynchronous web scraping)
-- PyCaret (for machine learning model creation and evaluation)
-- Pandas (for data manipulation)
 
 ## Getting Started
 
@@ -106,3 +102,11 @@ python flight_query_executor.py --flight-query your_query.json
 
 Replace `your_config.json`, `your_query.json`, and other placeholders with actual file names or arguments as per your setup and requirements.
 
+
+
+## Technologies Used
+
+- Python
+- Playwright for Python (for asynchronous web scraping)
+- PyCaret (for machine learning model creation and evaluation)
+- Pandas (for data manipulation)
