@@ -51,6 +51,7 @@ cd Skysaver
 
 To successfully run the webscraper, you must provide several configuration files. Below are the necessary steps and formats for these files:
 
+
 ### 1. Proxy Configuration
 
 Create a JSON file to list proxy servers. This file should contain multiple entries if multiple proxies are to be used. Here's an example of what an entry should look like:
@@ -101,7 +102,7 @@ cd src
 ```
 2. Run the web crawler to collect flight data (Note: This step requires appropriate configurations for IP switching):
 ```bash
-python 0_flight_query_executor.py --config your_config.json
+python 0_flight_query_executor.py --proxy_file your_proxy_list.json --query_file your_query_list.json --headers_file your_headers_list.json
 ```
 
 3. Run the web crawler to collect flight data (Note: This step requires appropriate configurations for IP switching):
@@ -121,7 +122,7 @@ python 3_model_creator.py
 
 5. (Optional) Test model accuracy with a test set:
 ```bash
-python flight_query_executor.py --flight-query your_query.json
+python 4_model_creator.py --testfile your_test.csv
 ```
 
 Replace `your_config.json`, `your_query.json`, and other placeholders with actual file names or arguments as per your setup and requirements.
